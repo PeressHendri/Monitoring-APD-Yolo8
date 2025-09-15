@@ -1,87 +1,46 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# YOLO Training Data (too large for GitHub)
+Combined-APD/train/images/
+Combined-APD/train/labels/
+Combined-APD/valid/images/
+Combined-APD/valid/labels/
+Combined-APD/test/images/
+Combined-APD/test/labels/
 
-# Virtual Environment
+# YOLO Cache files
+*.cache
+labels.cache
+
+# Model weights (too large)
+*.pt
+*.pth
+*.weights
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# YOLO specific
-runs/
-*.pt
-*.pth
-*.onnx
-*.engine
-
-# Dataset (optional - uncomment if you don't want to upload dataset)
-# Combined-APD/
-# violation_images/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Logs
-*.log
-logs/
 
 # OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+
+# Logs
+*.log
+runs/
 
 # Temporary files
 *.tmp
 *.temp
-test_*.jpg
-test_*.png
-debug_*.py
-test_*.py
-
-# Audio files (optional - uncomment if you don't want to upload alarm.wav)
-# *.wav
-# *.mp3
-# *.ogg
-
-# Model weights (optional - uncomment if you don't want to upload trained models)
-# runs/train/*/weights/
