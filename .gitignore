@@ -44,3 +44,10 @@ runs/
 # Temporary files
 *.tmp
 *.temp
+
+# Local database and generated images
+apd_violations.db
+violation_images/
+
+# Local settings
+settings.json
