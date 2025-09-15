@@ -137,14 +137,4 @@ camera_index = 0  # Index kamera (0 untuk default)
 
 MIT License
 
-## 🤝 Contributing
 
-1. Fork repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
-
-## 📞 Support
-
-Untuk pertanyaan atau bantuan, silakan buat issue di GitHub repository.
