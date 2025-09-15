@@ -1,0 +1,10 @@
+names:
+- Helmet
+- No_Helmet
+- Vest
+- No_Vest
+nc: 4
+path: C:\Users\peres\Downloads\TESTYOLO8\Combined-APD
+test: test/images
+train: train/images
+val: valid/images

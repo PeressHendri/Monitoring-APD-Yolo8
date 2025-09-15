@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Monitoring APD</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .status {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #e9ecef;
+        }
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 150px;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .video-container {
+            position: relative;
+            background: #000;
+            text-align: center;
+        }
+        .video-stream {
+            max-width: 100%;
+            height: auto;
+        }
+        .footer {
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+        .alarm {
+            background: #dc3545;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        .history-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .history-btn:hover {
+            background: #5a6268;
+        }
+        .sound-controls {
+            margin: 10px 0;
+        }
+        .sound-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 2px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .sound-btn:hover {
+            background: #138496;
+        }
+        .sound-btn.active {
+            background: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Sistem Monitoring APD</h1>
+            <p>Deteksi Helm dan Rompi Real-time dengan Alarm</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-success" onclick="startMonitoring()">▶️ Mulai Monitoring</button>
+            <button class="btn btn-danger" onclick="stopMonitoring()">⏹️ Hentikan Monitoring</button>
+            <button class="btn" onclick="resetStats()">🔄 Reset Statistik</button>
+            <a href="/history" class="history-btn">📊 Lihat Riwayat</a>
+        </div>
+        
+        <div class="sound-controls">
+            <button class="sound-btn" id="soundToggle" onclick="toggleSound()">🔊 Suara ON</button>
+            <button class="sound-btn" onclick="testAlarm()">🔔 Test Alarm</button>
+        </div>
+        
+        <div class="status">
+            <div class="stat-box">
+                <div class="stat-number" id="helmetCount">0</div>
+                <div class="stat-label">Pakai Helm</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="noHelmetCount">0</div>
+                <div class="stat-label">Tidak Pakai Helm</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="vestCount">0</div>
+                <div class="stat-label">Pakai Rompi</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="noVestCount">0</div>
+                <div class="stat-label">Tidak Pakai Rompi</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="violations">0</div>
+                <div class="stat-label">Total Pelanggaran</div>
+            </div>
+        </div>
+        
+        <div class="video-container">
+            <img src="{{ url_for('video_feed') }}" class="video-stream" alt="Video Stream">
+        </div>
+        
+        <div class="footer">
+            <p>Monitoring Langsung | Tekan F11 untuk fullscreen | Tekan 'q' untuk keluar</p>
+        </div>
+    </div>
+
+    <script>
+        let updateInterval;
+        let soundEnabled = true;
+        
+        function startMonitoring() {
+            fetch('/api/start')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        startStatusUpdates();
+                        showMessage('Monitoring dimulai!', 'success');
+                    } else {
+                        showMessage('Gagal memulai monitoring: ' + data.message, 'error');
+                    }
+                });
+        }
+        
+        function stopMonitoring() {
+            fetch('/api/stop')
+                .then(response => response.json())
+                .then(data => {
+                    stopStatusUpdates();
+                    showMessage('Monitoring dihentikan!', 'info');
+                });
+        }
+        
+        function resetStats() {
+            fetch('/api/reset')
+                .then(response => response.json())
+                .then(data => {
+                    showMessage('Statistik direset!', 'info');
+                    updateStatus();
+                });
+        }
+        
+        function startStatusUpdates() {
+            updateInterval = setInterval(updateStatus, 1000);
+        }
+        
+        function stopStatusUpdates() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        }
+        
+        function updateStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('helmetCount').textContent = data.helmet_count;
+                    document.getElementById('noHelmetCount').textContent = data.no_helmet_count;
+                    document.getElementById('vestCount').textContent = data.vest_count;
+                    document.getElementById('noVestCount').textContent = data.no_vest_count;
+                    document.getElementById('violations').textContent = data.total_violations;
+                    
+                    // Tampilkan alarm jika ada pelanggaran
+                    if (data.no_helmet_count > 0 || data.no_vest_count > 0) {
+                        showAlarm();
+                    } else {
+                        hideAlarm();
+                    }
+                });
+        }
+        
+        function showAlarm() {
+            let alarm = document.getElementById('alarm');
+            if (!alarm) {
+                alarm = document.createElement('div');
+                alarm.id = 'alarm';
+                alarm.className = 'alarm';
+                alarm.innerHTML = '🚨 ALARM! PELANGGARAN APD DETECTED! 🚨';
+                document.body.insertBefore(alarm, document.body.firstChild);
+            }
+            
+            // Putar suara alarm jika diaktifkan
+            if (soundEnabled) {
+                playAlarmSound();
+            }
+        }
+        
+        function hideAlarm() {
+            let alarm = document.getElementById('alarm');
+            if (alarm) {
+                alarm.remove();
+            }
+        }
+        
+        function playAlarmSound() {
+            // Buat audio context untuk suara alarm
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {
+                console.log('Audio tidak didukung');
+            }
+        }
+        
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundToggle');
+            if (soundEnabled) {
+                btn.textContent = '🔊 Suara ON';
+                btn.classList.add('active');
+            } else {
+                btn.textContent = '🔇 Suara OFF';
+                btn.classList.remove('active');
+            }
+        }
+        
+        function testAlarm() {
+            showAlarm();
+            setTimeout(hideAlarm, 2000);
+        }
+        
+        function showMessage(message, type) {
+            // Tampilkan pesan sederhana
+            console.log(type.toUpperCase() + ':', message);
+        }
+        
+        // Mulai update status saat halaman dimuat
+        window.onload = function() {
+            updateStatus();
+            startStatusUpdates();
+        };
+        
+        // Hentikan update saat halaman ditutup
+        window.onbeforeunload = function() {
+            stopStatusUpdates();
+        };
+    </script>
+</body>
+</html>
