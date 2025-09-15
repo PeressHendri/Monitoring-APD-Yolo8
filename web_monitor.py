@@ -24,7 +24,7 @@ app = Flask(__name__)
 class WebAPDMonitor:
     def __init__(self, model_path="runs/train/apd_detection_combined3/weights/best.pt"):
         self.model = YOLO(model_path)
-        self.conf_threshold = 0.1
+        self.conf_threshold = 0.2
         self.camera = None
         self.is_running = False
         self.auto_start = True  # Otomatis mulai monitoring
@@ -187,6 +187,10 @@ class WebAPDMonitor:
         # Jalankan inferensi YOLO
         results = self.model(frame, conf=self.conf_threshold, verbose=False)
         
+        # Debug: Print class names yang tersedia
+        if hasattr(self.model, 'names'):
+            print(f"Available classes: {self.model.names}")
+        
         detections = []
         helmet_count = 0
         no_helmet_count = 0
@@ -202,6 +206,9 @@ class WebAPDMonitor:
                     cls = int(box.cls[0])
                     class_name = self.model.names[cls]
                     
+                    # Debug: Print deteksi
+                    print(f"Detected: {class_name} with confidence {conf:.2f}")
+                    
                     detection_center = ((x1 + x2) // 2, (y1 + y2) // 2)
                     
                     detections.append({
@@ -213,6 +220,33 @@ class WebAPDMonitor:
                     
                     if class_name == 'Helmet':
                         helmet_count += 1
+                        # Cari atau buat person ID berdasarkan wajah terdekat
+                        person_id = self.find_closest_person(detection_center)
+                        if person_id is None:
+                            # Cari wajah terdekat
+                            closest_face = None
+                            min_face_distance = float('inf')
+                            for (fx, fy, fw, fh) in faces:
+                                face_center = (fx + fw//2, fy + fh//2)
+                                distance = np.sqrt((detection_center[0] - face_center[0])**2 + 
+                                                 (detection_center[1] - face_center[1])**2)
+                                if distance < min_face_distance:
+                                    min_face_distance = distance
+                                    closest_face = face_center
+                            
+                            if closest_face is not None:
+                                person_id = self.create_new_person(closest_face)
+                            else:
+                                person_id = f"NoFace_{self.person_counter}"
+                                self.person_counter += 1
+                        
+                        # Update tracking
+                        if person_id in self.tracked_persons:
+                            self.tracked_persons[person_id]['last_seen'] = time.time()
+                            self.tracked_persons[person_id]['face_center'] = detection_center
+                            # Reset violation jika pakai helm
+                            if 'no_helmet' in self.tracked_persons[person_id]['violations']:
+                                self.tracked_persons[person_id]['violations'].remove('no_helmet')
                     elif class_name == 'No_Helmet':
                         no_helmet_count += 1
                         # Cari atau buat person ID berdasarkan wajah terdekat
@@ -248,6 +282,33 @@ class WebAPDMonitor:
                     
                     elif class_name == 'Vest':
                         vest_count += 1
+                        # Cari atau buat person ID berdasarkan wajah terdekat
+                        person_id = self.find_closest_person(detection_center)
+                        if person_id is None:
+                            # Cari wajah terdekat
+                            closest_face = None
+                            min_face_distance = float('inf')
+                            for (fx, fy, fw, fh) in faces:
+                                face_center = (fx + fw//2, fy + fh//2)
+                                distance = np.sqrt((detection_center[0] - face_center[0])**2 + 
+                                                 (detection_center[1] - face_center[1])**2)
+                                if distance < min_face_distance:
+                                    min_face_distance = distance
+                                    closest_face = face_center
+                            
+                            if closest_face is not None:
+                                person_id = self.create_new_person(closest_face)
+                            else:
+                                person_id = f"NoFace_{self.person_counter}"
+                                self.person_counter += 1
+                        
+                        # Update tracking
+                        if person_id in self.tracked_persons:
+                            self.tracked_persons[person_id]['last_seen'] = time.time()
+                            self.tracked_persons[person_id]['face_center'] = detection_center
+                            # Reset violation jika pakai rompi
+                            if 'no_vest' in self.tracked_persons[person_id]['violations']:
+                                self.tracked_persons[person_id]['violations'].remove('no_vest')
                     elif class_name == 'No_Vest':
                         no_vest_count += 1
                         # Cari atau buat person ID berdasarkan wajah terdekat

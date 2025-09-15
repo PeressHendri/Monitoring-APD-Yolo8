@@ -15,10 +15,10 @@ from datetime import datetime
 import os
 
 class CCTVMonitor:
-    def __init__(self, model_path="runs/train/apd_detection8/weights/best.pt"):
+    def __init__(self, model_path="runs/train/apd_detection_combined3/weights/best.pt"):
         """Initialize CCTV monitor"""
         self.model = YOLO(model_path)
-        self.conf_threshold = 0.5
+        self.conf_threshold = 0.2
         
         # Sound system
         pygame.mixer.init()
